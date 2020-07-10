@@ -1,16 +1,14 @@
-﻿package servlet.rbac;
+package servlet.menu;
 
-import java.io.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
-
-import net.sf.json.JSONObject;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -18,19 +16,21 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 /**
- * Servlet implementation class login
+ * Servlet implementation class getUserInfo
  */
-@WebServlet("/api/usermanage/login")
-public class Login extends HttpServlet {
+@WebServlet("/api/menu/getMealByMenuId")
+public class GetMealByMenuId extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-    
+       
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public Login() {
+    public GetMealByMenuId() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -39,9 +39,8 @@ public class Login extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setCharacterEncoding("UTF-8");
-    	response.setHeader("Allow", "POST");
-    	response.sendError(405);
+		// TODO Auto-generated method stub
+		doPost(request,response);
 	}
 
 	/**
@@ -52,7 +51,6 @@ public class Login extends HttpServlet {
 		response.setContentType("text/json; charset=utf-8");
 		PrintWriter out = response.getWriter();
 		Connection conn = null;
-		HttpSession session = request.getSession();
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
@@ -70,28 +68,42 @@ public class Login extends HttpServlet {
 				}
 				String str = new String(bytes, 0, nTotalRead, "utf-8");
 				JSONObject jsonObj = JSONObject.fromObject(str);
-				String userName = jsonObj.getString("userName");
-				String password = jsonObj.getString("password");
-				String sql = "select * from user where userName=? and password=?";
+				String menuId = jsonObj.getString("menuId");
+				String sql = "select * from meal where menuId= ?";
+				String sql2 = "select menuName from menu where menuId= ?";
 				PreparedStatement ps = conn.prepareStatement(sql);
-				ps.setString(1, userName);
-				ps.setString(2, password);
+				PreparedStatement ps2 = conn.prepareStatement(sql2);
+				ps.setString(1, menuId);
+				ps2.setString(1, menuId);
+				ResultSet rs2 = ps2.executeQuery();
 				ResultSet rs = ps.executeQuery();
 				JSONObject jsonobj = new JSONObject();
-				if(rs.next()){
-					jsonobj.put("success",true);
-					String userId = rs.getString("userId");
-					String sessionId = session.getId();
-					session.setAttribute("userId", userId);
-					jsonobj.put("sessionId",sessionId);
-					
+				JSONObject jsonobj2 = new JSONObject();
+				JSONArray jsonarray = new JSONArray();
+				rs2.next();
+				jsonobj2.put("menuName",rs2.getString("menuName")==null?"":rs2.getString("menuName"));
+				rs2.close();
+				while(rs.next()){
+					jsonobj.put("mealId",rs.getString("mealId"));
+					jsonobj.put("mealDetail",rs.getString("mealDetail"));
+					jsonobj.put("mealName",rs.getString("mealName")==null?"":rs.getString("mealName"));
+					jsonobj.put("price",rs.getObject("price")==null?"":rs.getDouble("price"));
+					jsonobj.put("amount",rs.getObject("amount")==null?"":rs.getInt("amount"));
+					jsonobj.put("menuId",rs.getString("menuId"));
+					jsonobj.put("type",rs.getString("type")==null?"":rs.getString("type"));
+					jsonarray.add(jsonobj);
+				}
+				if(jsonobj.isEmpty()) {
+					jsonobj2.put("success", false);
+					jsonobj2.put("msg", "获取失败");
 				}
 				else {
-					jsonobj.put("success",false);
-					jsonobj.put("msg", "用户名或密码错误");
+					jsonobj2.put("success", true);
+					jsonobj2.put("msg", "获取成功");
 				}
+				jsonobj2.put("data",jsonarray);
 				out = response.getWriter();
-				out.println(jsonobj);
+				out.println(jsonobj2);
 				rs.close();
 				stmt.close();
 				conn.close();

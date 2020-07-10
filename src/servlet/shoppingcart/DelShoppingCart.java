@@ -1,58 +1,61 @@
-ï»¿package servlet.rbac;
-
+package servlet.shoppingcart;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 /**
- * Servlet implementation class setUserInfo
+ * Servlet implementation class regist
  */
-@WebServlet("/api/usermanage/setUserInfo")
-public class SetUserInfo extends HttpServlet {
+@WebServlet("/api/shoppingcart/delShoppingCart")
+public class DelShoppingCart extends HttpServlet {
+	
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public SetUserInfo() {
+    public DelShoppingCart() {
         super();
         // TODO Auto-generated constructor stub
+       
     }
 
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
+    @Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		response.setCharacterEncoding("UTF-8");
+    	response.setCharacterEncoding("UTF-8");
     	response.setHeader("Allow", "POST");
     	response.sendError(405);
 	}
-
+    
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
+    @Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		/* è®¾ç½®å“åº”å¤´éƒ¨ */
+    	/* ÉèÖÃÏìÓ¦Í·²¿ */
     	response.setCharacterEncoding("UTF-8");
 		response.setContentType("text/json; charset=utf-8");
 		PrintWriter out = response.getWriter();
 		
-		/* è¯»å–è¯·æ±‚å†…å®¹ */
+		/* ¶ÁÈ¡ÇëÇóÄÚÈİ */
 		request.setCharacterEncoding("UTF-8");
 		BufferedReader reader = request.getReader();
 		String msg = null;
@@ -62,64 +65,44 @@ public class SetUserInfo extends HttpServlet {
 		}		
 		String jsonStr = message.toString();
 		
-		/* å¤„ç†è¯·æ±‚å†…å®¹ä¸ºç©ºçš„æƒ…å†µ */
+		/* ´¦ÀíÇëÇóÄÚÈİÎª¿ÕµÄÇé¿ö */
 		if(jsonStr.isEmpty()) 
 		{
 			response.sendError(400);
 			return;
 		}
 		
-		/* è§£æJSONè·å–æ•°æ® */
+		/* ½âÎöJSON»ñÈ¡Êı¾İ */
 		JSONObject jsonObj = JSONObject.fromObject(jsonStr);
+		String mealId = jsonObj.getString("mealId");
 		String userId = jsonObj.getString("userId");
-		String userName = jsonObj.getString("userName");
-		String password = jsonObj.getString("password");
-		String telephone = jsonObj.getString("telephone");
-		String email = jsonObj.getString("email");
-		JSONArray roles = jsonObj.getJSONArray("roles");
-		
 		Connection conn = null;
 		Statement stmt = null;
 		try {
-			/* è¿æ¥æ•°æ®åº“ */
+			/* Á¬½ÓÊı¾İ¿â */
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
+			conn = DriverManager.getConnection
+				("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT", "coffee", "TklRpGi1");
 			stmt = conn.createStatement();
 			
-			/* æ„å»ºSQLè¯­å¥  */
-			String sql1 = "UPDATE user SET userName=?, password=?, telephone=?, email=? WHERE userId=?;";
-			PreparedStatement ps1 = conn.prepareStatement(sql1);
-			ps1.setString(1, userName);
-			ps1.setString(2, password);
-			ps1.setString(3, telephone);
-			ps1.setString(4, email);
-			ps1.setString(5, userId);
+			/* ¹¹½¨SQLÓï¾ä  */
+			String sql = "delete from user_meal where mealId=? and userId=?";
+			PreparedStatement ps = conn.prepareStatement(sql);
 			
-			String sql3 = "DELETE FROM role_user WHERE userId=?;";
-			PreparedStatement ps3 = conn.prepareStatement(sql3);
-			ps3.setString(1, userId);
+			ps.setString(1, mealId);
+			ps.setString(2, userId);
 			
-			String sql2 = "INSERT INTO role_user(roleName, userId) VALUES(?, ?);";
-			PreparedStatement ps2 = conn.prepareStatement(sql2);
-			ps2.setString(2, userId);
+			/* Ö´ĞĞSQLÓï¾ä  */
+			ps.executeUpdate();
 			
-			/* æ‰§è¡ŒSQLè¯­å¥  */
-			ps1.executeUpdate();
-			ps3.executeUpdate();
-			for(int i = 0; i < roles.size(); ++i) {
-				String role = roles.getString(i);
-				ps2.setString(1, role);
-				ps2.executeUpdate();
-			}
-			
-			/* å¤„ç†æ‰§è¡Œç»“æœ */
+			/* ´¦ÀíÖ´ĞĞ½á¹û */
 			JSONObject responseJson = new JSONObject();
 			responseJson.put("success", true);
-			responseJson.put("msg","ä¿®æ”¹æˆåŠŸ");
+			responseJson.put("msg","É¾³ı³É¹¦");
 			out.println(responseJson);
 		} catch (SQLException e) {
 			e.printStackTrace();
-			/* å¤„ç†æ‰§è¡Œç»“æœ */
+			/* ´¦ÀíÖ´ĞĞ½á¹û */
 			JSONObject responseJson = new JSONObject();
 			responseJson.put("success",false);
 			responseJson.put("msg", e.getMessage());
@@ -132,7 +115,7 @@ public class SetUserInfo extends HttpServlet {
 		} catch (ClassNotFoundException e) {
 			e.fillInStackTrace();
 		} finally {
-			/* æ— è®ºå¦‚ä½•å…³é—­è¿æ¥ */
+			/* ÎŞÂÛÈçºÎ¹Ø±ÕÁ¬½Ó */
 			try {
 				stmt.close();
 				conn.close();

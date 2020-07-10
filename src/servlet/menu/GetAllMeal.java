@@ -1,4 +1,4 @@
-﻿package servlet.rbac;
+package servlet.menu;
 
 
 import java.io.IOException;
@@ -21,14 +21,14 @@ import net.sf.json.JSONObject;
 /**
  * Servlet implementation class getUserList
  */
-@WebServlet("/api/usermanage/getUserList")
-public class GetUserList extends HttpServlet {
+@WebServlet("/api/menu/getAllMeal")
+public class GetAllMeal extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public GetUserList() {
+    public GetAllMeal() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -53,20 +53,23 @@ public class GetUserList extends HttpServlet {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
 			Statement stmt = conn.createStatement();
-			String sql = "select * from user";
+			String sql = "select * from meal";
 			ResultSet rs = stmt.executeQuery(sql);
 			JSONArray jsonarray = new JSONArray();
 			JSONObject jsonobj = new JSONObject();
 			JSONObject jsonobj2 = new JSONObject();
 			while(rs.next()){
-				jsonobj.put("userName",rs.getString("userName"));
-				jsonobj.put("userId",rs.getString("userId"));
-				jsonobj.put("telephone",rs.getString("telephone") == null ? "" : rs.getString("telephone"));
-				jsonobj.put("email",rs.getString("email") == null ? "" : rs.getString("email"));
+				jsonobj.put("mealId",rs.getString("mealId"));
+				jsonobj.put("price",rs.getObject("price")==null?"":rs.getDouble("price"));
+				jsonobj.put("amount",rs.getObject("amount")==null?"":rs.getInt("amount"));
+				jsonobj.put("menuId",rs.getString("menuId")==null?"":rs.getString("menuId"));
+				jsonobj.put("type",rs.getString("type")==null?"":rs.getString("type"));
+				jsonobj.put("mealName",rs.getString("mealName")==null?"":rs.getString("mealName"));
+				jsonobj.put("mealDetail",rs.getString("mealDetail"));
 				jsonarray.add(jsonobj);
 			}
 			jsonobj2.put("success",true);
-			jsonobj2.put("data", jsonarray);
+			jsonobj2.put("data",jsonarray);
 			out = response.getWriter();
 			out.println(jsonobj2);
 			rs.close();
