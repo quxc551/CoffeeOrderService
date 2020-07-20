@@ -1,35 +1,32 @@
-﻿package servlet.rbac;
+package servlet.order;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import net.sf.json.JSONObject;
 
 /**
- * Servlet implementation class login
+ * Servlet implementation class FinishOrder
  */
-@WebServlet("/api/usermanage/login")
-public class Login extends HttpServlet {
+@WebServlet("/api/ordermanage/finishOrder")
+public class FinishOrder extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-    
+       
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public Login() {
+    public FinishOrder() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -38,9 +35,8 @@ public class Login extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setCharacterEncoding("UTF-8");
-    	response.setHeader("Allow", "POST");
-    	response.sendError(405);
+		// TODO Auto-generated method stub
+		doPost(request,response);
 	}
 
 	/**
@@ -49,13 +45,13 @@ public class Login extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		response.setContentType("text/json; charset=utf-8");
-		PrintWriter out = response.getWriter();
-		Connection conn = null;
-		HttpSession session = request.getSession();
+		PrintWriter out=response.getWriter();
+		Connection conn=null;
+		Statement stmt = null;
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
-			Statement stmt = conn.createStatement();
+			conn=DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
+			stmt=conn.createStatement();
 			ServletInputStream is;
 			try {
 				is = request.getInputStream();
@@ -69,38 +65,41 @@ public class Login extends HttpServlet {
 				}
 				String str = new String(bytes, 0, nTotalRead, "utf-8");
 				JSONObject jsonObj = JSONObject.fromObject(str);
-				String userName = jsonObj.getString("userName");
-				String password = jsonObj.getString("password");
-				String sql = "select * from user where userName=? and password=?";
-				PreparedStatement ps = conn.prepareStatement(sql);
-				ps.setString(1, userName);
-				ps.setString(2, password);
-				ResultSet rs = ps.executeQuery();
-				JSONObject jsonobj = new JSONObject();
-				if(rs.next()){
-					jsonobj.put("success",true);
-					String userId = rs.getString("userId");
-					String sessionId = session.getId();
-					session.setAttribute("userId", userId);
-					session.setAttribute("login", true);
-					jsonobj.put("sessionId",sessionId);
-					
-				}
-				else {
-					jsonobj.put("success",false);
-					jsonobj.put("msg", "用户名或密码错误");
-				}
-				out = response.getWriter();
+				/*以创建订单时返回的orderId为传入参数*/
+				String orderId = jsonObj.getString("orderId");
+				String sql="update orders SET status ='已完成' where orderId= ?";
+				PreparedStatement ps=conn.prepareStatement(sql);
+				ps.setString(1, orderId);
+				ps.executeUpdate();
+				JSONObject jsonobj=new JSONObject();
+				jsonobj.put("success", true);
+				jsonobj.put("msg","订单状态修改成功");
+				out=response.getWriter();
 				out.println(jsonobj);
-				rs.close();
-				stmt.close();
-				conn.close();
-			} catch (IOException e) {
+				} catch (IOException e) {
 				e.printStackTrace();
+				}
+			}catch(SQLException e) {
+				e.printStackTrace();
+				JSONObject responseJson = new JSONObject();
+				responseJson.put("success",false);
+				responseJson.put("msg", e.getMessage());
+				out.println(responseJson);
+				try {
+					conn.rollback();
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+			}catch(ClassNotFoundException e) {
+				e.printStackTrace();
+			}finally {
+				try {
+					stmt.close();
+					conn.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
-		} catch (SQLException | ClassNotFoundException e) {
-			e.printStackTrace();
 		}
-	}
 
 }

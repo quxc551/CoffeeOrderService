@@ -1,13 +1,8 @@
-﻿package servlet.rbac;
+package servlet.rbac;
 
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -15,20 +10,21 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import net.sf.json.JSONObject;
 
 /**
- * Servlet implementation class deleteUser
+ * Servlet implementation class getUserInfo
  */
-@WebServlet("/api/usermanage/deleteUser")
-public class DeleteUser extends HttpServlet {
+@WebServlet("/api/usermanage/loginByMobile")
+public class LoginByMobile extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public DeleteUser() {
+    public LoginByMobile() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -38,9 +34,7 @@ public class DeleteUser extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		response.setCharacterEncoding("UTF-8");
-    	response.setHeader("Allow", "POST");
-    	response.sendError(405);
+		doPost(request,response);
 	}
 
 	/**
@@ -50,13 +44,9 @@ public class DeleteUser extends HttpServlet {
 		// TODO Auto-generated method stub
 		response.setContentType("text/json; charset=utf-8");
 		PrintWriter out = response.getWriter();
-		Connection conn = null;
+		ServletInputStream is;
+		
 		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
-			Statement stmt = conn.createStatement();
-			ServletInputStream is;
-			int error = 0;
 			is = request.getInputStream();
 			int nRead = 1;
 			int nTotalRead = 0;
@@ -67,32 +57,33 @@ public class DeleteUser extends HttpServlet {
 					nTotalRead = nTotalRead + nRead;
 			}
 			String str = new String(bytes, 0, nTotalRead, "utf-8");
+			HttpSession session = request.getSession();
 			JSONObject jsonObj = JSONObject.fromObject(str);
-			String userId = jsonObj.getString("userId");
-			String sql = "delete from user where userId= ?";
-			PreparedStatement ps = conn.prepareStatement(sql);
-			ps.setString(1, userId);
+			String VerificationCode_user = jsonObj.getString("code");
+			String VerificationCode_session =(String)session.getAttribute("VerificationCode");
 			JSONObject jsonobj = new JSONObject();
-			try {
-				ps.executeUpdate();
+			if(VerificationCode_user.equals(VerificationCode_session))
+			{
+				session.setAttribute("login", true);
+				session.removeAttribute("VerificationCode");
+				session.setMaxInactiveInterval(-1); // 永不过时
+				jsonobj.put("success", true);
+				jsonobj.put("msg", "登录成功");
 			}
-			catch(Exception e) {
-				error = 1;
-				jsonobj.put("msg",e.getMessage());
-			}
-			if(error == 1) {
+			else
+			{
 				jsonobj.put("success", false);
+				jsonobj.put("msg", "验证码不匹配");
 			}
-			else {
-				jsonobj.put("success",true);
-				jsonobj.put("msg","删除成功");
-			}				
+			if(jsonobj.isEmpty()) {
+				jsonobj.put("success", false);
+				jsonobj.put("msg", "操作失败");
+			}
 			out = response.getWriter();
 			out.println(jsonobj);
-			stmt.close();
-			conn.close();
-		} catch (SQLException | ClassNotFoundException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+
 }

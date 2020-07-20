@@ -1,4 +1,5 @@
-﻿package servlet.rbac;
+package servlet.menu;
+
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,21 +16,20 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import net.sf.json.JSONObject;
 
 /**
- * Servlet implementation class login
+ * Servlet implementation class getUserInfo
  */
-@WebServlet("/api/usermanage/login")
-public class Login extends HttpServlet {
+@WebServlet("/api/menu/getMeal")
+public class GetMeal extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-    
+       
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public Login() {
+    public GetMeal() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -38,9 +38,8 @@ public class Login extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setCharacterEncoding("UTF-8");
-    	response.setHeader("Allow", "POST");
-    	response.sendError(405);
+		// TODO Auto-generated method stub
+		doPost(request,response);
 	}
 
 	/**
@@ -51,7 +50,6 @@ public class Login extends HttpServlet {
 		response.setContentType("text/json; charset=utf-8");
 		PrintWriter out = response.getWriter();
 		Connection conn = null;
-		HttpSession session = request.getSession();
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
@@ -69,26 +67,24 @@ public class Login extends HttpServlet {
 				}
 				String str = new String(bytes, 0, nTotalRead, "utf-8");
 				JSONObject jsonObj = JSONObject.fromObject(str);
-				String userName = jsonObj.getString("userName");
-				String password = jsonObj.getString("password");
-				String sql = "select * from user where userName=? and password=?";
+				String mealId = jsonObj.getString("mealId");
+				String sql = "select * from meal where mealId= ?";
 				PreparedStatement ps = conn.prepareStatement(sql);
-				ps.setString(1, userName);
-				ps.setString(2, password);
+				ps.setString(1, mealId);
 				ResultSet rs = ps.executeQuery();
 				JSONObject jsonobj = new JSONObject();
-				if(rs.next()){
-					jsonobj.put("success",true);
-					String userId = rs.getString("userId");
-					String sessionId = session.getId();
-					session.setAttribute("userId", userId);
-					session.setAttribute("login", true);
-					jsonobj.put("sessionId",sessionId);
-					
+				while(rs.next()){
+					jsonobj.put("mealId",rs.getString("mealId"));
+					jsonobj.put("price",rs.getObject("price"));
+					jsonobj.put("amount",rs.getObject("amount"));
+					jsonobj.put("menuId",rs.getString("menuId"));
+					jsonobj.put("type",rs.getString("type"));
+					jsonobj.put("mealName",rs.getString("mealName"));
+					jsonobj.put("mealDetail",rs.getString("mealDetail"));
 				}
-				else {
-					jsonobj.put("success",false);
-					jsonobj.put("msg", "用户名或密码错误");
+				if(jsonobj.isEmpty()) {
+					jsonobj.put("success", false);
+					jsonobj.put("msg", "��ȡʧ��");
 				}
 				out = response.getWriter();
 				out.println(jsonobj);

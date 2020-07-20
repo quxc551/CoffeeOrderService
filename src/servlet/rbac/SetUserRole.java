@@ -1,4 +1,4 @@
-package servlet.rbac;
+﻿package servlet.rbac;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import net.sf.json.JSONObject;
 /**
  * Servlet implementation class regist
  */
-@WebServlet("/api/menu/setUserRole")
+@WebServlet("/api/usermanage/setUserRole")
 public class SetUserRole extends HttpServlet {
 	
 	private static final long serialVersionUID = 1L;

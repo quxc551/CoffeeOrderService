@@ -1,4 +1,4 @@
-﻿package servlet.rbac;
+package servlet.menu;
 
 
 import java.io.IOException;
@@ -19,16 +19,16 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 /**
- * Servlet implementation class getRoleList
+ * Servlet implementation class getUserList
  */
-@WebServlet("/api/usermanage/getRoleList")
-public class GetRoleList extends HttpServlet {
+@WebServlet("/api/menu/getAllMeal")
+public class GetAllMeal extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public GetRoleList() {
+    public GetAllMeal() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -37,6 +37,7 @@ public class GetRoleList extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
 		doPost(request,response);
 	}
 
@@ -44,6 +45,7 @@ public class GetRoleList extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// TODO Auto-generated method stub
 		response.setContentType("text/json; charset=utf-8");
 		PrintWriter out = response.getWriter();
 		Connection conn = null;
@@ -51,37 +53,25 @@ public class GetRoleList extends HttpServlet {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
 			Statement stmt = conn.createStatement();
-			String sql = "select * from role";
-			String sql2 = "select * from privilege";
+			String sql = "select * from meal";
 			ResultSet rs = stmt.executeQuery(sql);
 			JSONArray jsonarray = new JSONArray();
-			JSONArray jsonarray2 = new JSONArray();
 			JSONObject jsonobj = new JSONObject();
-			/*temp用来存role对象数组*/
-			JSONArray temp = new JSONArray();
+			JSONObject jsonobj2 = new JSONObject();
 			while(rs.next()){
-				String roleName = rs.getString("roleName");
-				String roleId = rs.getString("roleId");
-				jsonarray.add(roleName);
-				JSONObject tempObj = new JSONObject();
-				tempObj.put("roleName", roleName);
-				tempObj.put("roleId", roleId);
-				temp.add(tempObj);
+				jsonobj.put("mealId",rs.getString("mealId"));
+				jsonobj.put("price",rs.getObject("price")==null?"":rs.getDouble("price"));
+				jsonobj.put("amount",rs.getObject("amount")==null?"":rs.getInt("amount"));
+				jsonobj.put("menuId",rs.getString("menuId")==null?"":rs.getString("menuId"));
+				jsonobj.put("type",rs.getString("type")==null?"":rs.getString("type"));
+				jsonobj.put("mealName",rs.getString("mealName")==null?"":rs.getString("mealName"));
+				jsonobj.put("mealDetail",rs.getString("mealDetail"));
+				jsonarray.add(jsonobj);
 			}
-			ResultSet rs2 = stmt.executeQuery(sql2);
-			while(rs2.next()){
-				JSONObject jsonobj2 = new JSONObject();
-				jsonobj2.put("privilegeName", rs2.getString("name_zh"));
-				jsonobj2.put("privilegeId", rs2.getString("id"));
-				jsonarray2.add(jsonobj2);
-			}
-			jsonobj.put("permissions", jsonarray2);
-			/*roleObj即为roleId+roleName的对象数组*/
-			jsonobj.put("roleObj", temp);
-			jsonobj.put("roles", jsonarray);
-			jsonobj.put("success",true);
+			jsonobj2.put("success",true);
+			jsonobj2.put("data",jsonarray);
 			out = response.getWriter();
-			out.println(jsonobj);
+			out.println(jsonobj2);
 			rs.close();
 			stmt.close();
 			conn.close();

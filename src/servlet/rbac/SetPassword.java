@@ -1,4 +1,4 @@
-﻿package servlet.menu;
+package servlet.rbac;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,8 +9,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import java.util.UUID;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -23,15 +21,15 @@ import net.sf.json.JSONObject;
 /**
  * Servlet implementation class regist
  */
-@WebServlet("/api/menu/addMeal")
-public class AddMeal extends HttpServlet {
+@WebServlet("/api/usermanage/setPassword")
+public class SetPassword extends HttpServlet {
 	
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public AddMeal() {
+    public SetPassword() {
         super();
         // TODO Auto-generated constructor stub
        
@@ -67,22 +65,11 @@ public class AddMeal extends HttpServlet {
 		}		
 		String jsonStr = message.toString();
 		
-		/* 处理请求内容为空的情况 */
-		if(jsonStr.isEmpty()) 
-		{
-			response.sendError(400);
-			return;
-		}
 		
 		/* 解析JSON获取数据 */
 		JSONObject jsonObj = JSONObject.fromObject(jsonStr);
-		UUID mealId = UUID.randomUUID();
-		Double price = jsonObj.getDouble("price");
-		int amount = jsonObj.getInt("amount");
-		String menuId = jsonObj.getString("menuId");
-		String type = jsonObj.getString("type");
-		String mealName = jsonObj.getString("mealName");
-		String mealDetail = jsonObj.getString("mealDetail");
+		String userId = jsonObj.getString("userId");
+		String password = jsonObj.getString("password");
 		
 		Connection conn = null;
 		Statement stmt = null;
@@ -92,26 +79,21 @@ public class AddMeal extends HttpServlet {
 			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
 			stmt = conn.createStatement();
 			
-			/* 构建SQL语句  */
-			String sql = "insert into meal(mealId, price, amount, menuId, type, mealName, mealDetail) values (?,?,?,?,?,?,?)";
+			/* 构建SQL语句 */
+			String sql = "UPDATE user SET password=? WHERE userId=?;";
 			PreparedStatement ps = conn.prepareStatement(sql);
 			
-			ps.setString(1, mealId.toString());
-			ps.setDouble(2, price);
-			ps.setInt(3, amount);
-			ps.setString(4, menuId);
-			ps.setString(5, type);
-			ps.setString(6, mealName);
-			ps.setString(7, mealDetail);
+			ps.setString(1, password);
+			ps.setString(2, userId);
 			
-			/* 执行SQL语句  */
+			
+			/* 执行SQL语句 */
 			ps.executeUpdate();
 			
 			/* 处理执行结果 */
 			JSONObject responseJson = new JSONObject();
 			responseJson.put("success", true);
-			responseJson.put("msg","添加成功");
-			responseJson.put("mealId", mealId.toString());
+			responseJson.put("msg","修改成功");
 			out.println(responseJson);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -126,7 +108,7 @@ public class AddMeal extends HttpServlet {
 				e1.printStackTrace();
 			}
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			e.fillInStackTrace();
 		} finally {
 			/* 无论如何关闭连接 */
 			try {
@@ -137,5 +119,4 @@ public class AddMeal extends HttpServlet {
 			}
 		}	
 	}
-
 }
