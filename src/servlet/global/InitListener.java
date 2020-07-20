@@ -1,13 +1,11 @@
 package servlet.global;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.servlet.ServletContext;
+import java.io.File;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
 
-
+@WebListener
 public class InitListener implements ServletContextListener {  
 	
     /* @Override  
@@ -17,8 +15,13 @@ public class InitListener implements ServletContextListener {
   
     @Override  
     public void contextInitialized(ServletContextEvent context) {
-    	ServletContext sc = context.getServletContext();
-    	Map<String,String>loginedUser = new HashMap<String, String>();
-    	sc.setAttribute("loginedUser", loginedUser);
+    	//ServletContext sc = context.getServletContext();
+    	
+    	String mealImgSavePath=context.getServletContext().getRealPath("/");
+    	mealImgSavePath += ".." + File.separator + "Attachment" + File.separator + "MenuImage" + File.separator;
+    	File savefloder = new File(mealImgSavePath);
+        if (!savefloder.exists()) {
+        	savefloder.mkdir();
+        }
     }  
 }

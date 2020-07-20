@@ -16,6 +16,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import net.sf.json.JSONObject;
 
@@ -50,6 +51,7 @@ public class DecShoppingCart extends HttpServlet {
 		response.setContentType("text/json; charset=utf-8");
 		PrintWriter out = response.getWriter();
 		Connection conn = null;
+		HttpSession session = request.getSession();
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			conn = DriverManager.getConnection("jdbc:mysql://106.13.201.225:3306/coffee?useSSL=false&serverTimezone=GMT","coffee","TklRpGi1");
@@ -67,21 +69,20 @@ public class DecShoppingCart extends HttpServlet {
 				}
 				String str = new String(bytes, 0, nTotalRead, "utf-8");
 				JSONObject jsonObj = JSONObject.fromObject(str);
-				String userId = jsonObj.getString("userId");
+				String userId = (String) session.getAttribute("userId");
 				String mealId = jsonObj.getString("mealId");
 				String sql = "UPDATE user_meal SET quality=quality-1 WHERE mealId=? and userId=?";
 				PreparedStatement ps = conn.prepareStatement(sql);
 				ps.setString(1, mealId);
 				ps.setString(2, userId);
 				ps.executeUpdate();
-				JSONObject jsonobj = new JSONObject();
 				
 				String sql_q = "select * from user_meal where mealId= ? and userId= ?";
 				PreparedStatement ps_q = conn.prepareStatement(sql_q);
 				ps_q.setString(1, mealId);
 				ps_q.setString(2, userId);
 				ResultSet rs = ps_q.executeQuery();
-				while(rs.next())
+				if(rs.next())
 				{
 					int quality=rs.getInt("quality");
 					if(quality==0)
@@ -94,11 +95,9 @@ public class DecShoppingCart extends HttpServlet {
 					}
 					JSONObject responseJson = new JSONObject();
 					responseJson.put("success", true);
-					responseJson.put("msg","…æ≥˝≥…π¶");
+					responseJson.put("msg","Êìç‰ΩúÊàêÂäü");
 					out.println(responseJson);
 				}
-				out = response.getWriter();
-				out.println(jsonobj);
 				rs.close();
 				stmt.close();
 				conn.close();
